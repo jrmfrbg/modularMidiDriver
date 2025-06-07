@@ -1,0 +1,47 @@
+{
+  "available_usb_ports": [
+    {
+      "bus": "001",
+      "device": "001",
+      "id": "1d6b:0002",
+      "name": "Linux Foundation 2.0 root hub"
+    },
+    {
+      "bus": "002",
+      "device": "001",
+      "id": "1d6b:0003",
+      "name": "Linux Foundation 3.0 root hub"
+    },
+    {
+      "bus": "003",
+      "device": "001",
+      "id": "1d6b:0002",
+      "name": "Linux Foundation 2.0 root hub"
+    },
+    {
+      "bus": "003",
+      "device": "002",
+      "id": "1c7a:0587",
+      "name": "LighTuning Technology Inc. ETU905A88-E"
+    },
+    {
+      "bus": "003",
+      "device": "003",
+      "id": "3277:0010",
+      "name": "Sonix Technology Co., Ltd. USB2.0 FHD UVC WebCam"
+    },
+    {
+      "bus": "003",
+      "device": "004",
+      "id": "8087:0033",
+      "name": "Intel Corp. AX211 Bluetooth"
+    },
+    {
+      "bus": "004",
+      "device": "001",
+      "id": "1d6b:0003",
+      "name": "Linux Foundation 3.0 root hub"
+    }
+  ],
+  "selected_usb_port": ""
+}
