@@ -18,7 +18,7 @@ type USBPort struct {
 }
 
 var (
-	rootPath = main.FindRootPath()
+	rootPath = getvalues.FindRootPath() // Gets root path from getValues package
 )
 
 // UsbPortLists retrieves the list of USB ports and writes them to a JSON file.

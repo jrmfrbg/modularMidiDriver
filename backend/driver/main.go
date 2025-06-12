@@ -3,13 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"modularMidiGoApp/backend/httpHandler"
-	"strings"
-
-	//"modularMidiGoApp/backend/usbUtility"
+	handlers "modularMidiGoApp/backend/httpHandler"
 	"net/http"
-	"os"
-	"path/filepath"
 )
 
 // Executes first and prepares:
@@ -19,19 +14,10 @@ func main() {
 }
 
 // Returns the root path
-func FindRootPath() string {
-	exePath, err := os.Executable()
-	if err != nil {
-		return ""
-	}
-	dir := filepath.Dir(exePath)
-	parentDir := filepath.Dir(dir)
-	return parentDir
-}
 
 // Starts the HTTP handler (/httpHandler/handler.go)
 func startHttpHandler() {
-	httpPort = 
+	httpPort := LoadHTTPconf()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/user", handlers.UserHandler)
 

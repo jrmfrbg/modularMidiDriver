@@ -13,8 +13,8 @@ func UserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := usbUtility.UsbPortLists()
+	usbPorts := usbUtility.UsbPortLists
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(usbPorts)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	rootPath  string = FindRootPath()                              // Gets root path from main.go
+	rootPath  string = getvalues.FindRootPath()                    // Gets root path from main.go
 	confPath  string = filepath.Join(rootPath, "modularMidi.conf") // Edited rootPath to lead to .conf File
 	returnStr string                                               // String to be modifyed by functions
 )
