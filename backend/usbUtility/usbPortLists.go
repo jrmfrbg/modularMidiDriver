@@ -17,10 +17,14 @@ type USBPort struct {
 	Name   string `json:"name"`
 }
 
+var (
+	rootPath = main.FindRootPath()
+)
+
 // UsbPortLists retrieves the list of USB ports and writes them to a JSON file.
 // It uses the `lsusb` command to gather information about connected USB devices.
 
-func UsbPortLists(rootPath string) {
+func UsbPortLists() {
 	cmd := exec.Command("lsusb")
 	output, err := cmd.Output()
 	if err != nil {

@@ -2,6 +2,6 @@ package usbUtility
 
 import "fmt"
 
-func main() {
+func Placeholder() {
 	fmt.Println("Hello, World!")
 }
