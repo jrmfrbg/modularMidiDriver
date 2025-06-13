@@ -2,6 +2,7 @@ package httphandler
 
 import (
 	"fmt"
+	"modularMidiGoApp/backend/usbUtility" // Assuming this package provides the FindRootPath function
 	"net/http"
 )
 
@@ -17,6 +18,16 @@ var TestCallRoute = Route{
 		fmt.Fprint(w, "hello Client")
 	},
 }
+
+var UsbPortList = Route{
+	Path: "/usbPortListFile",
+	Handler: func(w http.ResponseWriter, r *http.Request) {
+		usb_ports_file := usbUtility.UsbPortLists()
+		fmt.Fprint(w, usb_ports_file)
+	},
+}
+
+// Package httphandler provides functionality to start an HTTP server with specific routes
 
 // StartHTTPServer starts an HTTP server on the given port and uses the provided routes for GET requests.
 func StartHTTPServer(port string, routes []Route) error {

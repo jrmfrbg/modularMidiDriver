@@ -12,6 +12,7 @@ func main() {
 	go func() {
 		routes := []httphandler.Route{
 			httphandler.TestCallRoute,
+			httphandler.UsbPortList,
 			// Add more routes here as needed
 		}
 		port := parsePort(LoadHTTPconf())

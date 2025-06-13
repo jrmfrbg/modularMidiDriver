@@ -20,12 +20,14 @@ type USBPort struct {
 
 var (
 	rootPath = getvalues.FindRootPath() // Gets root path from getValues package
+	dirPath  = filepath.Join(rootPath, "usbUtility")
+	filePath = filepath.Join(dirPath, "usb_ports.json")
 )
 
 // UsbPortLists retrieves the list of USB ports and writes them to a JSON file.
 // It uses the `lsusb` command to gather information about connected USB devices.
 
-func UsbPortLists() {
+func UsbPortLists() string {
 	cmd := exec.Command("lsusb")
 	output, err := cmd.Output()
 	if err != nil {
@@ -62,15 +64,13 @@ func UsbPortLists() {
 	fmt.Println("available USB Ports:")
 	fmt.Println(string(jsonData))
 	writeToFile(rootPath, jsonData)
+	return filePath
 }
 
 func writeToFile(rootPath string, data []byte) error {
-	dirPath := filepath.Join(rootPath, "usbUtility")
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-	// Read the existing file if it exists
-	filePath := filepath.Join(dirPath, "usb_ports.json")
 	var fileData map[string]interface{}
 	if _, err := os.Stat(filePath); err == nil {
 		content, err := os.ReadFile(filePath)
