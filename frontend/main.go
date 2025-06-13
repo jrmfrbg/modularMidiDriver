@@ -10,16 +10,14 @@ import (
 	"strings"
 )
 
-type USBPort struct {
-	Bus    string `json:"bus"`
-	Device string `json:"device"`
-	ID     string `json:"id"`
-	Name   string `json:"name"`
+type USBDevice struct {
+	Name       string `json:"name"`
+	DevicePath string `json:"device_path"`
 }
 
-type USBPortData struct {
-	AvailableUSBPorts []USBPort `json:"available_usb_ports"`
-	SelectedUSBPort   string    `json:"selected_usb_port"`
+type USBDeviceData struct {
+	AvailableUSBDevices []USBDevice `json:"available_usb_devices"`
+	SelectedUSBDevice   string      `json:"selected_usb_device"`
 }
 
 func main() {
@@ -32,14 +30,14 @@ func main() {
 
 	switch command {
 	case "list":
-		listUSBPorts()
+		listUSBDevices()
 	case "select":
 		if len(os.Args) < 3 {
-			fmt.Println("Error: Please provide a USB port index to select")
+			fmt.Println("Error: Please provide a USB device index to select")
 			fmt.Println("Usage: usb-manager select <index>")
 			os.Exit(1)
 		}
-		selectUSBPort(os.Args[2])
+		selectUSBDevice(os.Args[2])
 	case "help":
 		printUsage()
 	default:
@@ -49,12 +47,12 @@ func main() {
 	}
 }
 
-func printUsage() {
-	fmt.Println("USB Port Manager CLI")
+func printUsage() { // Print usage instructions for the CLI tool
+	fmt.Println("USB Device Manager CLI")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println("  usb-manager list           - List all available USB ports")
-	fmt.Println("  usb-manager select <index> - Select a USB port by index")
+	fmt.Println("  usb-manager list           - List all available USB devices")
+	fmt.Println("  usb-manager select <index> - Select a USB device by index")
 	fmt.Println("  usb-manager help           - Show this help message")
 	fmt.Println()
 	fmt.Println("Examples:")
@@ -62,7 +60,8 @@ func printUsage() {
 	fmt.Println("  usb-manager select 3")
 }
 
-func getUSBFileContent() (*USBPortData, string, error) {
+// getUSBFileContent retrieves the USB device data from the API and reads the JSON file
+func getUSBFileContent() (*USBDeviceData, string, error) {
 	// Get the file path from the API
 	resp, err := http.Get("http://localhost:18181/usbPortListFile")
 	if err != nil {
@@ -90,8 +89,9 @@ func getUSBFileContent() (*USBPortData, string, error) {
 		return nil, "", fmt.Errorf("failed to read file %s: %v", filePath, err)
 	}
 
+	//fmt.Print(string(fileContent))
 	// Parse the JSON content
-	var usbData USBPortData
+	var usbData USBDeviceData
 	err = json.Unmarshal(fileContent, &usbData)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to parse JSON: %v", err)
@@ -100,35 +100,35 @@ func getUSBFileContent() (*USBPortData, string, error) {
 	return &usbData, filePath, nil
 }
 
-func listUSBPorts() {
+func listUSBDevices() {
 	usbData, _, err := getUSBFileContent()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("Available USB Ports:")
-	fmt.Println("===================")
+	fmt.Println("Available USB Devices:")
+	fmt.Println("=====================")
 
-	if len(usbData.AvailableUSBPorts) == 0 {
-		fmt.Println("No USB ports found.")
+	if len(usbData.AvailableUSBDevices) == 0 {
+		fmt.Println("No USB devices found.")
 		return
 	}
 
-	for i, port := range usbData.AvailableUSBPorts {
-		fmt.Printf("[%d] Bus: %s, Device: %s, ID: %s\n", i+1, port.Bus, port.Device, port.ID)
-		fmt.Printf("    Name: %s\n", port.Name)
+	for i, device := range usbData.AvailableUSBDevices {
+		fmt.Printf("[%d] %s\n", i+1, device.Name)
+		fmt.Printf("    Device Path: %s\n", device.DevicePath)
 		fmt.Println()
 	}
 
-	if usbData.SelectedUSBPort != "" {
-		fmt.Printf("Currently selected USB port: %s\n", usbData.SelectedUSBPort)
+	if usbData.SelectedUSBDevice != "" {
+		fmt.Printf("Currently selected USB device path: %s\n", usbData.SelectedUSBDevice)
 	} else {
-		fmt.Println("No USB port currently selected.")
+		fmt.Println("No USB device currently selected.")
 	}
 }
 
-func selectUSBPort(indexStr string) {
+func selectUSBDevice(indexStr string) {
 	usbData, filePath, err := getUSBFileContent()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -143,19 +143,19 @@ func selectUSBPort(indexStr string) {
 	}
 
 	// Validate the index
-	if index < 1 || index > len(usbData.AvailableUSBPorts) {
-		fmt.Printf("Error: Index %d is out of range. Available ports: 1-%d\n", index, len(usbData.AvailableUSBPorts))
+	if index < 1 || index > len(usbData.AvailableUSBDevices) {
+		fmt.Printf("Error: Index %d is out of range. Available devices: 1-%d\n", index, len(usbData.AvailableUSBDevices))
 		os.Exit(1)
 	}
 
-	// Get the selected port (convert to 0-based index)
-	selectedPort := usbData.AvailableUSBPorts[index-1]
+	// Get the selected device (convert to 0-based index)
+	selectedDevice := usbData.AvailableUSBDevices[index-1]
 
-	// Update the selected USB port in the data structure
-	usbData.SelectedUSBPort = selectedPort.ID
+	// Update the selected USB device in the data structure (store device path)
+	usbData.SelectedUSBDevice = selectedDevice.DevicePath
 
 	// Marshal the updated data back to JSON with proper formatting
-	updatedJSON, err := json.MarshalIndent(usbData, "", " ")
+	updatedJSON, err := json.MarshalIndent(usbData, "", "  ")
 	if err != nil {
 		fmt.Printf("Error: Failed to marshal JSON: %v\n", err)
 		os.Exit(1)
@@ -168,8 +168,8 @@ func selectUSBPort(indexStr string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Successfully selected USB port:\n")
-	fmt.Printf("  Bus: %s, Device: %s, ID: %s\n", selectedPort.Bus, selectedPort.Device, selectedPort.ID)
-	fmt.Printf("  Name: %s\n", selectedPort.Name)
+	fmt.Printf("Successfully selected USB device:\n")
+	fmt.Printf("  Name: %s\n", selectedDevice.Name)
+	fmt.Printf("  Device Path: %s\n", selectedDevice.DevicePath)
 	fmt.Printf("  Saved to: %s\n", filePath)
 }

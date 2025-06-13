@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	httphandler "modularMidiGoApp/backend/httpHandler"
+	"modularMidiGoApp/backend/usbUtility"
 	"strings"
 )
 
@@ -21,6 +22,7 @@ func main() {
 		}
 	}()
 
+	usbUtility.UsbPortLists()
 	log.Println("HTTP handler started successfully.")
 
 	// Continue with other async tasks or main logic here
