@@ -1,29 +1,42 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	handlers "modularMidiGoApp/backend/httpHandler"
-	"net/http"
+	httphandler "modularMidiGoApp/backend/httpHandler"
+	"strings"
 )
 
 // Executes first and prepares:
 // - Starts HTTP handler
 func main() {
-	startHttpHandler()
+	go func() {
+		routes := []httphandler.Route{
+			httphandler.TestCallRoute,
+			// Add more routes here as needed
+		}
+		port := parsePort(LoadHTTPconf())
+		if err := httphandler.StartHTTPServer(port, routes); err != nil {
+			log.Fatalf("Failed to start HTTP server: %v", err)
+		}
+	}()
+
+	log.Println("HTTP handler started successfully.")
+
+	// Continue with other async tasks or main logic here
+	log.Println("running async tasks...")
+
+	// Prevent main from exiting immediately (example: block forever)
+	select {}
 }
 
-// Returns the root path
-
-// Starts the HTTP handler (/httpHandler/handler.go)
-func startHttpHandler() {
-	httpPort := LoadHTTPconf()
-	mux := http.NewServeMux()
-	mux.HandleFunc("/user", handlers.UserHandler)
-
-	log.Printf("Server running on :%d", httpPort)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", httpPort), mux)
-	if err != nil {
-		log.Fatal(err)
+func parsePort(unparsed string) string {
+	var port string
+	parts := strings.Split(unparsed, ",")
+	for _, part := range parts {
+		if strings.HasPrefix(part, "listen_port:") {
+			port = strings.TrimPrefix(part, "listen_port:")
+			break
+		}
 	}
+	return port
 }

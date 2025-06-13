@@ -1,20 +1,38 @@
-package handlers
+package httphandler
 
 import (
-	"encoding/json"
-	"modularMidiGoApp/backend/usbUtility"
+	"fmt"
 	"net/http"
-	//"modularMidiGoApp/backend/driver"
 )
 
-func UserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+// Route defines a mapping between a URL path and its handler function.
+type Route struct {
+	Path    string
+	Handler http.HandlerFunc
+}
+
+var TestCallRoute = Route{
+	Path: "/testCall",
+	Handler: func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "hello Client")
+	},
+}
+
+// StartHTTPServer starts an HTTP server on the given port and uses the provided routes for GET requests.
+func StartHTTPServer(port string, routes []Route) error {
+	mux := http.NewServeMux()
+	for _, route := range routes {
+		// Wrap each handler to only allow GET requests
+		mux.HandleFunc(route.Path, func(handler http.HandlerFunc) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodGet {
+					handler(w, r)
+				} else {
+					http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+				}
+			}
+		}(route.Handler))
 	}
-
-	usbPorts := usbUtility.UsbPortLists
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(usbPorts)
+	addr := fmt.Sprintf(":%s", port)
+	return http.ListenAndServe(addr, mux)
 }

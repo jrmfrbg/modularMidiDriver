@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	getvalues "modularMidiGoApp/backend/getValues"
 	"path/filepath"
 	"strings"
 
@@ -31,11 +32,11 @@ func LoadHTTPconf() string {
 	returnStr := strings.Join([]string{
 		"listen_port:",
 		getKey("http", "listen_port"),
-		";backend_api_port:",
+		",backend_api_port:",
 		getKey("http", "backend_api_port"),
-		";backend_api_host:",
+		",backend_api_host:",
 		getKey("http", "backend_api_host"),
-		";backend_api_protocol:",
+		",backend_api_protocol:",
 		getKey("http", "backend_api_protocol"),
 		";",
 	}, "")
