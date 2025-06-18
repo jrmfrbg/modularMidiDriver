@@ -38,7 +38,6 @@ func LoadHTTPconf() string {
 		getKey("http", "backend_api_host"),
 		",backend_api_protocol:",
 		getKey("http", "backend_api_protocol"),
-		";",
 	}, "")
 	return returnStr
 }

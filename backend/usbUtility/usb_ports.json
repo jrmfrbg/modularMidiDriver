@@ -1,132 +1,132 @@
 {
   "available_usb_devices": [
     {
-      "name": "ttyS0",
-      "device_path": "/dev/ttyS0"
+      "device_path": "/dev/ttyS0",
+      "name": "ttyS0"
     },
     {
-      "name": "ttyS1",
-      "device_path": "/dev/ttyS1"
+      "device_path": "/dev/ttyS1",
+      "name": "ttyS1"
     },
     {
-      "name": "ttyS10",
-      "device_path": "/dev/ttyS10"
+      "device_path": "/dev/ttyS10",
+      "name": "ttyS10"
     },
     {
-      "name": "ttyS11",
-      "device_path": "/dev/ttyS11"
+      "device_path": "/dev/ttyS11",
+      "name": "ttyS11"
     },
     {
-      "name": "ttyS12",
-      "device_path": "/dev/ttyS12"
+      "device_path": "/dev/ttyS12",
+      "name": "ttyS12"
     },
     {
-      "name": "ttyS13",
-      "device_path": "/dev/ttyS13"
+      "device_path": "/dev/ttyS13",
+      "name": "ttyS13"
     },
     {
-      "name": "ttyS14",
-      "device_path": "/dev/ttyS14"
+      "device_path": "/dev/ttyS14",
+      "name": "ttyS14"
     },
     {
-      "name": "ttyS15",
-      "device_path": "/dev/ttyS15"
+      "device_path": "/dev/ttyS15",
+      "name": "ttyS15"
     },
     {
-      "name": "ttyS16",
-      "device_path": "/dev/ttyS16"
+      "device_path": "/dev/ttyS16",
+      "name": "ttyS16"
     },
     {
-      "name": "ttyS17",
-      "device_path": "/dev/ttyS17"
+      "device_path": "/dev/ttyS17",
+      "name": "ttyS17"
     },
     {
-      "name": "ttyS18",
-      "device_path": "/dev/ttyS18"
+      "device_path": "/dev/ttyS18",
+      "name": "ttyS18"
     },
     {
-      "name": "ttyS19",
-      "device_path": "/dev/ttyS19"
+      "device_path": "/dev/ttyS19",
+      "name": "ttyS19"
     },
     {
-      "name": "ttyS2",
-      "device_path": "/dev/ttyS2"
+      "device_path": "/dev/ttyS2",
+      "name": "ttyS2"
     },
     {
-      "name": "ttyS20",
-      "device_path": "/dev/ttyS20"
+      "device_path": "/dev/ttyS20",
+      "name": "ttyS20"
     },
     {
-      "name": "ttyS21",
-      "device_path": "/dev/ttyS21"
+      "device_path": "/dev/ttyS21",
+      "name": "ttyS21"
     },
     {
-      "name": "ttyS22",
-      "device_path": "/dev/ttyS22"
+      "device_path": "/dev/ttyS22",
+      "name": "ttyS22"
     },
     {
-      "name": "ttyS23",
-      "device_path": "/dev/ttyS23"
+      "device_path": "/dev/ttyS23",
+      "name": "ttyS23"
     },
     {
-      "name": "ttyS24",
-      "device_path": "/dev/ttyS24"
+      "device_path": "/dev/ttyS24",
+      "name": "ttyS24"
     },
     {
-      "name": "ttyS25",
-      "device_path": "/dev/ttyS25"
+      "device_path": "/dev/ttyS25",
+      "name": "ttyS25"
     },
     {
-      "name": "ttyS26",
-      "device_path": "/dev/ttyS26"
+      "device_path": "/dev/ttyS26",
+      "name": "ttyS26"
     },
     {
-      "name": "ttyS27",
-      "device_path": "/dev/ttyS27"
+      "device_path": "/dev/ttyS27",
+      "name": "ttyS27"
     },
     {
-      "name": "ttyS28",
-      "device_path": "/dev/ttyS28"
+      "device_path": "/dev/ttyS28",
+      "name": "ttyS28"
     },
     {
-      "name": "ttyS29",
-      "device_path": "/dev/ttyS29"
+      "device_path": "/dev/ttyS29",
+      "name": "ttyS29"
     },
     {
-      "name": "ttyS3",
-      "device_path": "/dev/ttyS3"
+      "device_path": "/dev/ttyS3",
+      "name": "ttyS3"
     },
     {
-      "name": "ttyS30",
-      "device_path": "/dev/ttyS30"
+      "device_path": "/dev/ttyS30",
+      "name": "ttyS30"
     },
     {
-      "name": "ttyS31",
-      "device_path": "/dev/ttyS31"
+      "device_path": "/dev/ttyS31",
+      "name": "ttyS31"
     },
     {
-      "name": "Alder Lake PCH UART",
-      "device_path": "/dev/ttyS4"
+      "device_path": "/dev/ttyS4",
+      "name": "Alder Lake PCH UART"
     },
     {
-      "name": "ttyS5",
-      "device_path": "/dev/ttyS5"
+      "device_path": "/dev/ttyS5",
+      "name": "ttyS5"
     },
     {
-      "name": "ttyS6",
-      "device_path": "/dev/ttyS6"
+      "device_path": "/dev/ttyS6",
+      "name": "ttyS6"
     },
     {
-      "name": "ttyS7",
-      "device_path": "/dev/ttyS7"
+      "device_path": "/dev/ttyS7",
+      "name": "ttyS7"
     },
     {
-      "name": "ttyS8",
-      "device_path": "/dev/ttyS8"
+      "device_path": "/dev/ttyS8",
+      "name": "ttyS8"
     },
     {
-      "name": "ttyS9",
-      "device_path": "/dev/ttyS9"
+      "device_path": "/dev/ttyS9",
+      "name": "ttyS9"
     }
   ],
   "selected_usb_device": "/dev/ttyS11"

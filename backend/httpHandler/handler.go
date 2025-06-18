@@ -2,7 +2,8 @@ package httphandler
 
 import (
 	"fmt"
-	"modularMidiGoApp/backend/usbUtility" // Assuming this package provides the FindRootPath function
+	midiCCOutputer "modularMidiGoApp/backend/midiUtility"
+	"modularMidiGoApp/backend/usbUtility"
 	"net/http"
 )
 
@@ -24,6 +25,22 @@ var UsbPortList = Route{
 	Handler: func(w http.ResponseWriter, r *http.Request) {
 		usb_ports_file := usbUtility.UsbPortLists()
 		fmt.Fprint(w, usb_ports_file)
+	},
+}
+
+var MidiTester = Route{
+	Path: "/testMidiOutput",
+	Handler: func(w http.ResponseWriter, r *http.Request) {
+		go midiCCOutputer.StartTest()
+		fmt.Fprint(w, "Midi Output Test Triggered")
+	},
+}
+
+var MidiPortList = Route{
+	Path: "/listMidiPorts",
+	Handler: func(w http.ResponseWriter, r *http.Request) {
+		midi_ports_file := midiCCOutputer.ListMIDIPorts()
+		fmt.Fprintln(w, "midi ports list written to file: ", midi_ports_file)
 	},
 }
 

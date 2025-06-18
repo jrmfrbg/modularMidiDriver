@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	httphandler "modularMidiGoApp/backend/httpHandler"
-	"modularMidiGoApp/backend/usbUtility"
 	"strings"
 )
 
@@ -14,15 +13,15 @@ func main() {
 		routes := []httphandler.Route{
 			httphandler.TestCallRoute,
 			httphandler.UsbPortList,
-			// Add more routes here as needed
+			httphandler.MidiTester,
+			httphandler.MidiPortList,
+			// Add more routes
 		}
 		port := parsePort(LoadHTTPconf())
 		if err := httphandler.StartHTTPServer(port, routes); err != nil {
 			log.Fatalf("Failed to start HTTP server: %v", err)
 		}
 	}()
-
-	usbUtility.UsbPortLists()
 	log.Println("HTTP handler started successfully.")
 
 	// Continue with other async tasks or main logic here
