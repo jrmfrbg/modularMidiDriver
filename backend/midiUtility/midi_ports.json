@@ -19,10 +19,10 @@
     {
       "name": "Virtual Raw MIDI 0-3:VirMIDI 0-3",
       "port_path": "19:0"
-    },
-    {
-      "name": "qlcplus:__QLC__",
-      "port_path": "128:0"
     }
-  ]
+  ],
+  "selected_midi_port": {
+    "name": "Midi Through:Midi Through Port-0",
+    "port_path": "14:0"
+  }
 }

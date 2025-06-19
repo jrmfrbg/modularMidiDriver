@@ -24,6 +24,16 @@ type USBDeviceData struct {
 	SelectedUSBDevice   string      `json:"selected_usb_device"`
 }
 
+type MIDIDevice struct {
+	Name       string `json:"name"`
+	DevicePath string `json:"device_path"`
+}
+
+type MIDIDeviceData struct {
+	AvailableMIDIDevices []USBDevice `json:"available_midi_devices"`
+	SelectedMIDIDevice   string      `json:"selected_midi_device"`
+}
+
 var (
 	rootPath           string = getRootPath()
 	confPath           string = filepath.Join(rootPath, "backend", "modularMidi.conf") // Edited rootPath to lead to .conf File
@@ -118,6 +128,13 @@ func main() {
 			os.Exit(1)
 		}
 		selectUSBDevice(os.Args[2])
+	case "select-MIDI":
+		if len(os.Args) < 3 {
+			fmt.Println("Error: Please provide a MIDI device index to select")
+			fmt.Println("Usage: usb-manager select-MIDI <index>")
+			os.Exit(1)
+		}
+		selectMIDIDevice(os.Args[2])
 	case "test-midi":
 		testMidiOutput()
 		fmt.Println("MIDI output test triggered.")
@@ -193,6 +210,44 @@ func getUSBFileContent() (*USBDeviceData, string, error) {
 	}
 
 	return &usbData, filePath, nil
+}
+
+func getMIDIFileContent() (*MIDIDeviceData, string, error) {
+	fmt.Println("API Call: ", strings.Join([]string{backendApiLocation, "/listMidiPorts"}, ""))
+	resp, err := http.Get(strings.Join([]string{backendApiLocation, "/listMidiPorts"}, ""))
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to call API: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", fmt.Errorf("API returned status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read API response: %v", err)
+	}
+
+	filePath := strings.TrimSpace(string(body))
+	if filePath == "" {
+		return nil, "", fmt.Errorf("API returned empty file path")
+	}
+
+	// Read the JSON file
+	fileContent, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read file %s: %v", filePath, err)
+	}
+
+	// Parse the JSON content
+	var midiData MIDIDeviceData
+	err = json.Unmarshal(fileContent, &midiData)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to parse JSON: %v", err)
+	}
+
+	return &midiData, filePath, nil
 }
 
 func listUSBDevices() {
@@ -293,6 +348,53 @@ func selectUSBDevice(indexStr string) {
 	}
 
 	fmt.Printf("Successfully selected USB device:\n")
+	fmt.Printf("  Name: %s\n", selectedDevice.Name)
+	fmt.Printf("  Device Path: %s\n", selectedDevice.DevicePath)
+	fmt.Printf("  Saved to: %s\n", filePath)
+}
+
+func selectMIDIDevice(indexStr string) {
+	midiData, filePath, err := getMIDIFileContent()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Print("Backend Loc: ")
+
+	// Parse the index
+	index, err := strconv.Atoi(indexStr)
+	if err != nil {
+		fmt.Printf("Error: Invalid index '%s'. Please provide a valid number.\n", indexStr)
+		os.Exit(1)
+	}
+
+	// Validate the index
+	if index < 1 || index > len(midiData.AvailableMIDIDevices) {
+		fmt.Printf("Error: Index %d is out of range. Available devices: 1-%d\n", index, len(midiData.AvailableMIDIDevices))
+		os.Exit(1)
+	}
+
+	// Get the selected device (convert to 0-based index)
+	selectedDevice := midiData.AvailableMIDIDevices[index-1]
+
+	// Update the selected MIDI device in the data structure (store device path)
+	midiData.SelectedMIDIDevice = selectedDevice.DevicePath
+
+	// Marshal the updated data back to JSON with proper formatting
+	updatedJSON, err := json.MarshalIndent(midiData, "", "  ")
+	if err != nil {
+		fmt.Printf("Error: Failed to marshal JSON: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Write the updated data back to the file
+	err = os.WriteFile(filePath, updatedJSON, 0644)
+	if err != nil {
+		fmt.Printf("Error: Failed to write to file %s: %v\n", filePath, err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Successfully selected MIDI device:\n")
 	fmt.Printf("  Name: %s\n", selectedDevice.Name)
 	fmt.Printf("  Device Path: %s\n", selectedDevice.DevicePath)
 	fmt.Printf("  Saved to: %s\n", filePath)
