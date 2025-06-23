@@ -3,12 +3,15 @@ package main
 import (
 	"log"
 	httphandler "modularMidiGoApp/backend/httpHandler"
+	midiOutputPipeline "modularMidiGoApp/backend/midiUtility/midiOutputPipeline"
 	"strings"
 )
 
 // Executes first and prepares:
 // - Starts HTTP handler
 func main() {
+	go midiOutputPipeline.MidiWriter()
+
 	go func() {
 		routes := []httphandler.Route{
 			httphandler.TestCallRoute,

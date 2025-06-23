@@ -22,7 +22,7 @@
     }
   ],
   "selected_midi_port": {
-    "name": "Midi Through:Midi Through Port-0",
-    "port_path": "14:0"
+    "name": "Virtual Raw MIDI 0-1:VirMIDI 0-1",
+    "port_path": "17:0"
   }
 }

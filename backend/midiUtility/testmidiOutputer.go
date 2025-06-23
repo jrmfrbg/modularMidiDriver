@@ -4,40 +4,35 @@ import (
 	"fmt"
 	"log"
 	"math"
+	midiOutputPipeline "modularMidiGoApp/backend/midiUtility/midiOutputPipeline"
 	"time"
 )
 
 // WiggleTest simulates wiggling/oscillating values for a given CC number
-// ccNum: the CC number to wiggle (0-127)
+// ccNumber: the MIDI CC number to wiggle (0-126)
 // centerValue: the center value to wiggle around (0-127)
 // amplitude: how much to wiggle (0-63, will be clamped to stay within 0-127 range)
 // steps: number of wiggle steps to generate
 // channel: MIDI channel (0-15)
-func WiggleTest(ccNum int, centerValue int, amplitude int, steps int, channel uint8) {
-	fmt.Printf("=== Wiggle Test for CC %d ===\n", ccNum)
-	fmt.Printf("Center: %d, Amplitude: %d, Steps: %d, Channel: %d\n\n",
-		centerValue, amplitude, steps, channel+1)
+func WiggleTest(ccNumber int, centerValue int, amplitude int, steps int, channel uint8) {
+	fmt.Printf("=== Wiggle Test ===\n")
+	fmt.Printf("CC: %d, Center: %d, Amplitude: %d, Steps: %d, Channel: %d\n\n",
+		ccNumber, centerValue, amplitude, steps, channel+1)
 
-	// Validate inputs
-	if ccNum < 0 || ccNum > 127 {
-		log.Printf("CC number %d out of range (0-127)", ccNum)
-		return
-	}
 	if centerValue < 0 || centerValue > 127 {
 		log.Printf("Center value %d out of range (0-127)", centerValue)
 		return
 	}
+	if ccNumber < 0 || ccNumber > 126 {
+		log.Printf("CC number %d out of range (0-126)", ccNumber)
+		return
+	}
 
-	// Generate wiggle values using sine wave
 	for i := 0; i < steps; i++ {
-		// Create sine wave from 0 to 2π over the steps
 		angle := float64(i) * 2.0 * math.Pi / float64(steps-1)
-
-		// Calculate wiggle value
 		wiggleOffset := float64(amplitude) * math.Sin(angle)
 		wiggleValue := float64(centerValue) + wiggleOffset
 
-		// Clamp to MIDI range (0-127)
 		if wiggleValue < 0 {
 			wiggleValue = 0
 		}
@@ -45,45 +40,35 @@ func WiggleTest(ccNum int, centerValue int, amplitude int, steps int, channel ui
 			wiggleValue = 127
 		}
 
-		// Create matrix for this single CC message
-		matrix := [][]int{
-			{ccNum},
-			{int(wiggleValue)},
-		}
+		var values [127]uint8
+		values[ccNumber] = uint8(wiggleValue)
 
-		// Send the CC message
-		err := OutputMIDICC(matrix, channel)
-		if err != nil {
-			log.Printf("Error sending wiggle step %d: %v", i, err)
-			continue
-		}
+		midiOutputPipeline.MidiOutChannel <- values
 
-		// Small delay between messages to create wiggle effect
 		time.Sleep(50 * time.Millisecond)
 	}
 
-	fmt.Printf("Wiggle test completed for CC %d\n\n", ccNum)
+	fmt.Printf("Wiggle test completed\n\n")
 }
 
 // SmoothWiggleTest creates a smooth continuous wiggle effect
-// ccNum: the CC number to wiggle (0-127)
+// ccNumber: the MIDI CC number to wiggle (0-126)
 // centerValue: the center value to wiggle around (0-127)
 // amplitude: how much to wiggle (0-63)
 // duration: how long to wiggle in seconds
 // frequency: wiggle frequency in Hz (wiggles per second)
 // channel: MIDI channel (0-15)
-func SmoothWiggleTest(ccNum int, centerValue int, amplitude int, duration float64, frequency float64, channel uint8) {
-	fmt.Printf("=== Smooth Wiggle Test for CC %d ===\n", ccNum)
-	fmt.Printf("Center: %d, Amplitude: %d, Duration: %.1fs, Frequency: %.1fHz, Channel: %d\n\n",
-		centerValue, amplitude, duration, frequency, channel+1)
+func SmoothWiggleTest(ccNumber int, centerValue int, amplitude int, duration float64, frequency float64, channel uint8) {
+	fmt.Printf("=== Smooth Wiggle Test ===\n")
+	fmt.Printf("CC: %d, Center: %d, Amplitude: %d, Duration: %.1fs, Frequency: %.1fHz, Channel: %d\n\n",
+		ccNumber, centerValue, amplitude, duration, frequency, channel+1)
 
-	// Validate inputs
-	if ccNum < 0 || ccNum > 127 {
-		log.Printf("CC number %d out of range (0-127)", ccNum)
-		return
-	}
 	if centerValue < 0 || centerValue > 127 {
 		log.Printf("Center value %d out of range (0-127)", centerValue)
+		return
+	}
+	if ccNumber < 0 || ccNumber > 126 {
+		log.Printf("CC number %d out of range (0-126)", ccNumber)
 		return
 	}
 
@@ -108,45 +93,35 @@ func SmoothWiggleTest(ccNum int, centerValue int, amplitude int, duration float6
 			wiggleValue = 127
 		}
 
-		// Create matrix for this single CC message
-		matrix := [][]int{
-			{ccNum},
-			{int(wiggleValue)},
-		}
+		var values [127]uint8
+		values[ccNumber] = uint8(wiggleValue)
 
-		// Send the CC message
-		err := OutputMIDICC(matrix, channel)
-		if err != nil {
-			log.Printf("Error sending smooth wiggle: %v", err)
-			continue
-		}
+		midiOutputPipeline.MidiOutChannel <- values
 
-		// Control the update rate (20ms = 50 updates per second)
 		time.Sleep(20 * time.Millisecond)
 	}
 
-	fmt.Printf("Smooth wiggle test completed for CC %d\n\n", ccNum)
+	fmt.Printf("Smooth wiggle test completed\n\n")
 }
 
 // RandomWiggleTest creates random wiggle values around a center point
-// ccNum: the CC number to wiggle (0-127)
+// ccNumber: the MIDI CC number to wiggle (0-126)
 // centerValue: the center value to wiggle around (0-127)
 // maxDeviation: maximum random deviation from center (0-63)
 // count: number of random values to send
 // delay: delay between messages in milliseconds
 // channel: MIDI channel (0-15)
-func RandomWiggleTest(ccNum int, centerValue int, maxDeviation int, count int, delay int, channel uint8) {
-	fmt.Printf("=== Random Wiggle Test for CC %d ===\n", ccNum)
-	fmt.Printf("Center: %d, Max Deviation: %d, Count: %d, Delay: %dms, Channel: %d\n\n",
-		centerValue, maxDeviation, count, delay, channel+1)
+func RandomWiggleTest(ccNumber int, centerValue int, maxDeviation int, count int, delay int, channel uint8) {
+	fmt.Printf("=== Random Wiggle Test ===\n")
+	fmt.Printf("CC: %d, Center: %d, Max Deviation: %d, Count: %d, Delay: %dms, Channel: %d\n\n",
+		ccNumber, centerValue, maxDeviation, count, delay, channel+1)
 
-	// Validate inputs
-	if ccNum < 0 || ccNum > 127 {
-		log.Printf("CC number %d out of range (0-127)", ccNum)
-		return
-	}
 	if centerValue < 0 || centerValue > 127 {
 		log.Printf("Center value %d out of range (0-127)", centerValue)
+		return
+	}
+	if ccNumber < 0 || ccNumber > 126 {
+		log.Printf("CC number %d out of range (0-126)", ccNumber)
 		return
 	}
 
@@ -165,26 +140,18 @@ func RandomWiggleTest(ccNum int, centerValue int, maxDeviation int, count int, d
 			wiggleValue = 127
 		}
 
-		// Create matrix for this single CC message
-		matrix := [][]int{
-			{ccNum},
-			{int(wiggleValue)},
-		}
+		var values [127]uint8
+		values[ccNumber] = uint8(wiggleValue)
 
-		// Send the CC message
-		err := OutputMIDICC(matrix, channel)
-		if err != nil {
-			log.Printf("Error sending random wiggle step %d: %v", i, err)
-			continue
-		}
+		midiOutputPipeline.MidiOutChannel <- values
 
-		// Delay between messages
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
 
-	fmt.Printf("Random wiggle test completed for CC %d\n\n", ccNum)
+	fmt.Printf("Random wiggle test completed\n\n")
 }
 
+// Update StartTest to use new function signatures
 func StartTest() {
 	// Test wiggling CC 1 (Modulation) around value 64 with amplitude 30
 	WiggleTest(1, 64, 30, 20, 0)
@@ -197,5 +164,5 @@ func StartTest() {
 
 	// Test wiggling CC 74 (Filter Cutoff) - common for synths
 	fmt.Println("Testing filter cutoff wiggle...")
-	SmoothWiggleTest(74, 80, 25, 2.0, 1.5, 0)
+	SmoothWiggleTest(74, 80, 25, 2.0, 1, 0)
 }

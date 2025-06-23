@@ -40,7 +40,7 @@ var MidiPortList = Route{
 	Path: "/listMidiPorts",
 	Handler: func(w http.ResponseWriter, r *http.Request) {
 		midi_ports_file := midiCCOutputer.ListMIDIPorts()
-		fmt.Fprintln(w, "midi ports list written to file: ", midi_ports_file)
+		fmt.Fprintln(w, midi_ports_file)
 	},
 }
 
