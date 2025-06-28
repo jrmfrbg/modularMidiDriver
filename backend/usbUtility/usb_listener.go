@@ -12,13 +12,15 @@ import (
 	"go.bug.st/serial"
 )
 
+var USBListenerStop = make(chan struct{})
+
 // USBPortsList represents the overall structure of the JSON file.
 type USBPortsList struct {
 	AvailableUSBDevices []USBDevice `json:"available_usb_devices"`
 	SelectedUSBDevice   string      `json:"selected_usb_device"`
 }
 
-func main() {
+func USBListener() {
 	// List available serial ports
 	ports, err := serial.GetPortsList()
 	if err != nil {

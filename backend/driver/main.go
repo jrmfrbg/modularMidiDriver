@@ -4,6 +4,7 @@ import (
 	"log"
 	httphandler "modularMidiGoApp/backend/httpHandler"
 	midiOutputPipeline "modularMidiGoApp/backend/midiUtility/midiOutputPipeline"
+	usbUtility "modularMidiGoApp/backend/usbUtility"
 	"strings"
 )
 
@@ -11,6 +12,7 @@ import (
 // - Starts HTTP handler
 func main() {
 	go midiOutputPipeline.MidiWriter()
+	go usbUtility.USBListener()
 
 	go func() {
 		routes := []httphandler.Route{
