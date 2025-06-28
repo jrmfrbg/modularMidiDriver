@@ -1,3 +1,5 @@
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/jrmfrbg/modularMidiDriver?utm_source=oss&utm_medium=github&utm_campaign=jrmfrbg%2FmodularMidiDriver&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 # Modular MIDI Control - PC Driver
 
 This repository contains the PC driver software for a modular MIDI input device designed for music production, DJing, and lighting control. The software is currently in development and will serve as the central hub for a flexible and expandable hardware ecosystem.
