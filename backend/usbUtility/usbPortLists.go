@@ -21,7 +21,7 @@ type USBDevice struct {
 var (
 	rootPath = getvalues.FindRootPath() // Gets root path from getValues package
 	dirPath  = filepath.Join(rootPath, "usbUtility")
-	filePath = filepath.Join(dirPath, "usb_ports.json")
+	FilePath = filepath.Join(dirPath, "usb_ports.json")
 )
 
 // UsbPortLists retrieves the list of USB devices with their names and device paths.
@@ -43,7 +43,7 @@ func UsbPortLists() string {
 	fmt.Println("Available USB Devices:")
 	fmt.Println(string(jsonData))
 	writeToFile(jsonData)
-	return filePath
+	return FilePath
 }
 
 // findUSBDevices finds USB devices and their corresponding device paths
@@ -344,8 +344,8 @@ func writeToFile(data []byte) error {
 	}
 
 	var fileData map[string]interface{}
-	if _, err := os.Stat(filePath); err == nil {
-		content, err := os.ReadFile(filePath)
+	if _, err := os.Stat(FilePath); err == nil {
+		content, err := os.ReadFile(FilePath)
 		if err == nil {
 			json.Unmarshal(content, &fileData)
 		}
@@ -364,5 +364,5 @@ func writeToFile(data []byte) error {
 		return fmt.Errorf("failed to marshal final JSON: %w", err)
 	}
 
-	return os.WriteFile(filePath, finalData, 0644)
+	return os.WriteFile(FilePath, finalData, 0644)
 }

@@ -2,200 +2,133 @@ package usbUtility
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
 	"go.bug.st/serial"
 )
 
-// SerialManager handles USB serial communication with ESP32
-type SerialManager struct {
-	port           serial.Port
-	portName       string
-	isRunning      bool
-	stopChan       chan struct{}
-	initString     string
-	triggerString  string
-	responseString string
+// USBPortsList represents the overall structure of the JSON file.
+type USBPortsList struct {
+	AvailableUSBDevices []USBDevice `json:"available_usb_devices"`
+	SelectedUSBDevice   string      `json:"selected_usb_device"`
 }
 
-// NewSerialManager creates a new SerialManager instance
-func NewSerialManager(portName, initString, triggerString, responseString string) *SerialManager {
-	return &SerialManager{
-		portName:       portName,
-		stopChan:       make(chan struct{}),
-		initString:     initString,
-		triggerString:  triggerString,
-		responseString: responseString,
+func main() {
+	// List available serial ports
+	ports, err := serial.GetPortsList()
+	if err != nil {
+		log.Fatalf("Error getting port list: %v", err)
 	}
-}
+	if len(ports) == 0 {
+		log.Fatal("No serial ports found!")
+	}
 
-// Start begins the serial communication as a goroutine
-func (sm *SerialManager) Start() error {
-	// Configure serial port
+	fmt.Println("Available serial ports:")
+	for _, port := range ports {
+		fmt.Printf("- %s\n", port)
+	}
+
+	// Try to automatically find the ESP32 port.
+	// This often involves looking for specific names, but it can be
+	// tricky to make universally reliable.
+	// For example, on Linux, it might be something like "/dev/ttyACM0" or "/dev/ttyUSB0".
+	// On Windows, "COMx".
+	// The ESP32's native USB CDC often appears as "ACM" or a similar name.
+	var esp32Port string
+	for _, p := range ports {
+		// You might need to adjust this heuristic based on your OS and ESP32 model.
+		// For ESP32 native USB, it's often /dev/ttyACM0 on Linux.
+		// On Windows, it could be "COMx" with a specific device description.
+		selectedUSBDevice, err := getSelectedUSBDevice(FilePath)
+		fmt.Printf("Selected USB Device: %s\n", selectedUSBDevice)
+		if err != nil {
+			log.Println("Error getting selected USB device: %v", err)
+		}
+
+		if strings.Contains(p, selectedUSBDevice) { // Basic heuristic
+			fmt.Printf("Attempting to connect to: %s (heuristic match)\n", p)
+			esp32Port = p
+			break
+		}
+	}
+
+	if esp32Port == "" {
+		log.Fatal("Could not automatically find a likely ESP32 serial port. Please specify manually.")
+		// If you can't find it automatically, uncomment the line below and set it manually:
+		// esp32Port = "/dev/ttyACM0" // Or "COM3" on Windows
+	}
+
+	// Open the serial port
 	mode := &serial.Mode{
-		BaudRate: 115200, // Common ESP32 baud rate
+		BaudRate: 115200, // This baud rate *does* matter for the Go client
 		Parity:   serial.NoParity,
 		DataBits: 8,
 		StopBits: serial.OneStopBit,
 	}
 
-	// Open the serial port
-	port, err := serial.Open(sm.portName, mode)
+	port, err := serial.Open(esp32Port, mode)
 	if err != nil {
-		return fmt.Errorf("failed to open serial port %s: %v", sm.portName, err)
+		log.Fatalf("Error opening serial port %s: %v", esp32Port, err)
 	}
+	defer port.Close()
 
-	sm.port = port
-	sm.isRunning = true
+	fmt.Printf("Successfully opened serial port: %s\n", esp32Port)
 
-	// Start the communication goroutine
-	go sm.run()
-
-	return nil
-}
-
-// Stop gracefully stops the serial communication
-func (sm *SerialManager) Stop() {
-	if !sm.isRunning {
-		return
-	}
-
-	log.Println("Stopping serial communication...")
-	close(sm.stopChan)
-
-	// Wait a moment for goroutine to finish
-	time.Sleep(100 * time.Millisecond)
-
-	if sm.port != nil {
-		sm.port.Close()
-	}
-
-	sm.isRunning = false
-	log.Println("Serial communication stopped")
-}
-
-// IsRunning returns the current status of the serial manager
-func (sm *SerialManager) IsRunning() bool {
-	return sm.isRunning
-}
-
-// run is the main goroutine that handles serial communication
-func (sm *SerialManager) run() {
-	defer func() {
-		if sm.port != nil {
-			sm.port.Close()
+	// --- GoRoutine for reading from serial port ---
+	go func() {
+		scanner := bufio.NewScanner(port)
+		for scanner.Scan() {
+			line := scanner.Text()
+			fmt.Printf("[ESP32] %s\n", line)
 		}
-		sm.isRunning = false
+		if err := scanner.Err(); err != nil {
+			log.Printf("Error reading from serial port: %v\n", err)
+		}
 	}()
 
-	log.Printf("Starting serial communication on port %s", sm.portName)
-
-	// Send initial string
-	if sm.initString != "" {
-		err := sm.writeString(sm.initString)
-		if err != nil {
-			log.Printf("Failed to send initial string: %v", err)
-			return
-		}
-		log.Printf("Sent initial string: %s", sm.initString)
-	}
-
-	// Create a buffered reader for incoming data
-	reader := bufio.NewReader(sm.port)
-
+	// --- Main loop for sending data to serial port ---
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("Enter text to send to ESP32 (type 'exit' to quit):")
 	for {
-		select {
-		case <-sm.stopChan:
-			log.Println("Received stop signal")
+		fmt.Print("> ")
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input) // Remove newline and carriage return
+
+		if input == "exit" {
+			fmt.Println("Exiting client.")
 			return
-
-		default:
-			// Set a short read timeout to allow checking stop channel
-			sm.port.SetReadTimeout(100 * time.Millisecond)
-
-			// Read incoming data
-			data, err := reader.ReadString('\n')
-			if err != nil {
-				// Check if it's a timeout error (expected)
-				if strings.Contains(err.Error(), "timeout") {
-					continue
-				}
-				log.Printf("Error reading from serial port: %v", err)
-				continue
-			}
-
-			// Clean up the received string
-			receivedString := strings.TrimSpace(data)
-			if receivedString == "" {
-				continue
-			}
-
-			log.Printf("Received: %s", receivedString)
-
-			// Check if received string matches trigger string
-			if receivedString == sm.triggerString {
-				log.Printf("Trigger string matched, sending response: %s", sm.responseString)
-
-				err := sm.writeString(sm.responseString)
-				if err != nil {
-					log.Printf("Failed to send response string: %v", err)
-				}
-			}
 		}
+
+		// Send the input to ESP32, adding a newline for the ESP32 to recognize it
+		_, err := port.Write([]byte(input + "\n"))
+		if err != nil {
+			log.Printf("Error writing to serial port: %v\n", err)
+			continue
+		}
+		time.Sleep(10 * time.Millisecond) // Give a tiny delay
 	}
 }
 
-// writeString writes a string to the serial port with newline
-func (sm *SerialManager) writeString(data string) error {
-	if sm.port == nil {
-		return fmt.Errorf("serial port not open")
-	}
-
-	// Add newline if not present
-	if !strings.HasSuffix(data, "\n") {
-		data += "\n"
-	}
-
-	_, err := sm.port.Write([]byte(data))
-	return err
-}
-
-// SendString sends a custom string to the ESP32 (can be used externally)
-func (sm *SerialManager) SendString(data string) error {
-	if !sm.isRunning {
-		return fmt.Errorf("serial manager is not running")
-	}
-	return sm.writeString(data)
-}
-
-// Example usage function demonstrating how to use the module
-func ExampleUsage() {
-	// Create serial manager with specific strings
-	serialMgr := NewSerialManager(
-		"/dev/ttyUSB0",  // Port name (Linux/Mac) - use "COM3" etc. for Windows
-		"HELLO_ESP32",   // Initial string to send
-		"REQUEST_DATA",  // String to listen for
-		"DATA_RESPONSE", // String to send back when trigger is received
-	)
-
-	// Start the serial communication
-	err := serialMgr.Start()
+func getSelectedUSBDevice(usbPortsListFile string) (string, error) {
+	// Read the content of the JSON file.
+	fileContent, err := os.ReadFile(usbPortsListFile)
 	if err != nil {
-		log.Fatalf("Failed to start serial communication: %v", err)
+		return "", fmt.Errorf("failed to read file '%s': %w", usbPortsListFile, err)
 	}
 
-	// Simulate running for some time
-	log.Println("Serial communication running...")
+	// Create an instance of the USBPortsList struct to hold the unmarshaled data.
+	var config USBPortsList
 
-	// In your actual application, you would check for WiFi connection here
-	// and call serialMgr.Stop() when WiFi is available
+	// Unmarshal the JSON content into the config struct.
+	if err := json.Unmarshal(fileContent, &config); err != nil {
+		return "", fmt.Errorf("failed to unmarshal JSON from '%s': %w", usbPortsListFile, err)
+	}
 
-	// For demonstration, stop after 30 seconds
-	time.Sleep(30 * time.Second)
-
-	// Stop the serial communication (call this when WiFi is connected)
-	serialMgr.Stop()
+	// Return the selected USB device.
+	return config.SelectedUSBDevice, nil
 }

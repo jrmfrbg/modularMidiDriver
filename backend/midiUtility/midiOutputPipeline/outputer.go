@@ -23,13 +23,19 @@ type SelectedPortData struct {
 	PortPath string `json:"port_path"`
 }
 
+// Place this struct definition where both WiggleTest and MidiWriter can see it.
+type MidiCCMessage struct {
+	Channel    uint8
+	Controller uint8
+	Value      uint8
+}
+
 var (
-	rootPath_MO   = getvalues.FindRootPath()
-	dirPath_MO    = filepath.Join(rootPath_MO, "midiUtility")
-	midi_filePath = filepath.Join(dirPath_MO, "midi_ports.json")
+	rootPath_MO = getvalues.FindRootPath()
+	dirPath_MO  = filepath.Join(rootPath_MO, "midiUtility")
 )
 
-var MidiOutChannel = make(chan [127]uint8)
+var MidiOutChannel = make(chan MidiCCMessage)
 
 func MidiWriter() {
 	// Get available MIDI outputs
@@ -49,18 +55,29 @@ func MidiWriter() {
 	}
 	outPortID := outs[portIdx]
 	send, err := midi.SendTo(outPortID)
+	if err != nil {
+		fmt.Printf("Error opening MIDI output port %s: %v\n", outPortID)
+	}
 
 	outChannel := MidiOutChannel
 
 	for msg := range outChannel {
 		fmt.Printf("Received MIDI message: %v\n", msg)
-		for i, value := range msg {
-			err := send(midi.ControlChange(0, uint8(i), value))
-			if err != nil {
-				log.Printf("Error sending CC %d with value %d: %v", i, value, err)
-				continue
-			}
+
+		err := send(midi.ControlChange(msg.Channel, msg.Controller, msg.Value))
+		if err != nil {
+			log.Printf("Error sending CC %d with value %d: %v", msg.Controller, msg.Value, err)
 		}
+
+		/*
+			for i, value := range msg {
+				err := send(midi.ControlChange(0, uint8(i), value))
+				if err != nil {
+					log.Printf("Error sending CC %d with value %d: %v", i, value, err)
+					continue
+				}
+			}
+		*/
 	}
 }
 

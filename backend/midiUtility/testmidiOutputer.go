@@ -40,10 +40,16 @@ func WiggleTest(ccNumber int, centerValue int, amplitude int, steps int, channel
 			wiggleValue = 127
 		}
 
-		var values [127]uint8
-		values[ccNumber] = uint8(wiggleValue)
+		// Create the specific message
+		msg := midiOutputPipeline.MidiCCMessage{
+			Channel:    channel,
+			Controller: uint8(ccNumber),
+			Value:      uint8(wiggleValue),
+		}
 
-		midiOutputPipeline.MidiOutChannel <- values
+		// Send the single, efficient message
+		// NOTE: Your channel should now be of type chan MidiCCMessage
+		midiOutputPipeline.MidiOutChannel <- msg
 
 		time.Sleep(50 * time.Millisecond)
 	}
@@ -85,7 +91,6 @@ func SmoothWiggleTest(ccNumber int, centerValue int, amplitude int, duration flo
 		wiggleOffset := float64(amplitude) * math.Sin(angle)
 		wiggleValue := float64(centerValue) + wiggleOffset
 
-		// Clamp to MIDI range (0-127)
 		if wiggleValue < 0 {
 			wiggleValue = 0
 		}
@@ -93,11 +98,16 @@ func SmoothWiggleTest(ccNumber int, centerValue int, amplitude int, duration flo
 			wiggleValue = 127
 		}
 
-		var values [127]uint8
-		values[ccNumber] = uint8(wiggleValue)
+		// Create the specific message
+		msg := midiOutputPipeline.MidiCCMessage{
+			Channel:    channel,
+			Controller: uint8(ccNumber),
+			Value:      uint8(wiggleValue),
+		}
 
-		midiOutputPipeline.MidiOutChannel <- values
-
+		// Send the single, efficient message
+		// NOTE: Your channel should now be of type chan MidiCCMessage
+		midiOutputPipeline.MidiOutChannel <- msg
 		time.Sleep(20 * time.Millisecond)
 	}
 
@@ -132,7 +142,6 @@ func RandomWiggleTest(ccNumber int, centerValue int, maxDeviation int, count int
 
 		wiggleValue := float64(centerValue) + deviation
 
-		// Clamp to MIDI range (0-127)
 		if wiggleValue < 0 {
 			wiggleValue = 0
 		}
@@ -140,10 +149,16 @@ func RandomWiggleTest(ccNumber int, centerValue int, maxDeviation int, count int
 			wiggleValue = 127
 		}
 
-		var values [127]uint8
-		values[ccNumber] = uint8(wiggleValue)
+		// Create the specific message
+		msg := midiOutputPipeline.MidiCCMessage{
+			Channel:    channel,
+			Controller: uint8(ccNumber),
+			Value:      uint8(wiggleValue),
+		}
 
-		midiOutputPipeline.MidiOutChannel <- values
+		// Send the single, efficient message
+		// NOTE: Your channel should now be of type chan MidiCCMessage
+		midiOutputPipeline.MidiOutChannel <- msg
 
 		time.Sleep(time.Duration(delay) * time.Millisecond)
 	}
