@@ -269,9 +269,7 @@ func getNameFromUdev(devicePath string) string {
 func getNameFromIOReg(devicePath string) string {
 	// Extract the device identifier from path (e.g., cu.usbmodem14101 -> usbmodem14101)
 	baseName := filepath.Base(devicePath)
-	if strings.HasPrefix(baseName, "cu.") {
-		baseName = strings.TrimPrefix(baseName, "cu.")
-	}
+	baseName = strings.TrimPrefix(baseName, "cu.")
 
 	cmd := exec.Command("ioreg", "-p", "IOUSB", "-l")
 	output, err := cmd.Output()
