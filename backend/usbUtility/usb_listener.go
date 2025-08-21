@@ -2,13 +2,10 @@ package usbUtility
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
-	"time"
-
 	midiOutputPipeline "modularMidiGoApp/backend/midiUtility/midiOutputPipeline"
+	"time"
 
 	"go.bug.st/serial"
 )
@@ -49,17 +46,15 @@ func ESP32MidiListener(channel uint8, outputChan chan<- midiOutputPipeline.MidiC
 
 func listenToESP32(channel uint8, outputChan chan<- midiOutputPipeline.MidiCCMessage, stopChan <-chan struct{}) error {
 	// Get the selected USB device
-	/*deviceName, err := getSelectedUSBDevice(FilePath)
+	deviceName, err := GetSelectedUSBDevice(FilePath)
 	if err != nil {
 		return fmt.Errorf("failed to get USB device: %w", err)
 	}
-	*/
-	deviceName := "/dev/ttyUSB0" // Replace with your actual device path or logic to get it dynamically
 	log.Printf("Connecting to ESP32 on device: %s", deviceName)
 
 	// Configure serial port
 	mode := &serial.Mode{
-		BaudRate: 115200, // Adjust baud rate as needed for your ESP32
+		BaudRate: 9600, // Adjust baud rate as needed for your ESP32
 		DataBits: 8,
 		Parity:   serial.NoParity,
 		StopBits: serial.OneStopBit,
@@ -140,21 +135,40 @@ func processMidiData(data []byte, channel uint8, outputChan chan<- midiOutputPip
 	return nil
 }
 
-func getSelectedUSBDevice(usbPortsListFile string) (string, error) {
-	// Read the content of the JSON file.
-	fileContent, err := os.ReadFile(usbPortsListFile)
+func WriteToUSB(data interface{}) error {
+	// Get the selected USB device
+	deviceName, err := GetSelectedUSBDevice(FilePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read file '%s': %w", usbPortsListFile, err)
+		return fmt.Errorf("failed to get USB device: %w", err)
 	}
 
-	// Create an instance of the USBPortsList struct to hold the unmarshaled data.
-	var config USBPortsList
+	// Open a connection to the USB device
+	conn, err := serial.Open(deviceName, &serial.Mode{
+		BaudRate: 9600,
+		DataBits: 8,
+		Parity:   serial.NoParity,
+		StopBits: serial.OneStopBit,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to open USB connection: %w", err)
+	}
+	defer conn.Close()
 
-	// Unmarshal the JSON content into the config struct.
-	if err := json.Unmarshal(fileContent, &config); err != nil {
-		return "", fmt.Errorf("failed to unmarshal JSON from '%s': %w", usbPortsListFile, err)
+	// Convert data to []byte if necessary
+	var bytesToWrite []byte
+	switch v := data.(type) {
+	case []byte:
+		bytesToWrite = v
+	case string:
+		bytesToWrite = []byte(v)
+	default:
+		return fmt.Errorf("unsupported data type for writing to USB device")
 	}
 
-	// Return the selected USB device.
-	return config.SelectedUSBDevice, nil
+	// Write the data to the USB device
+	if _, err := conn.Write(bytesToWrite); err != nil {
+		return fmt.Errorf("failed to write to USB device: %w", err)
+	}
+
+	return nil
 }

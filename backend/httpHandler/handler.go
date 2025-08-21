@@ -2,6 +2,7 @@ package httphandler
 
 import (
 	"fmt"
+	espConfigUtility "modularMidiGoApp/backend/espConfigUtility"
 	midiCCOutputer "modularMidiGoApp/backend/midiUtility"
 	"modularMidiGoApp/backend/usbUtility"
 	"net/http"
@@ -17,6 +18,14 @@ var TestCallRoute = Route{
 	Path: "/testCall",
 	Handler: func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "hello Client")
+	},
+}
+
+var WritePinConfig = Route{
+	Path: "/writePinConfig",
+	Handler: func(w http.ResponseWriter, r *http.Request) {
+		espConfigUtility.WritePinConfig()
+		fmt.Fprint(w, "Pin configuration written successfully.")
 	},
 }
 

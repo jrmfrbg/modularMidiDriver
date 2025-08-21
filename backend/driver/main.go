@@ -21,6 +21,7 @@ func main() {
 			httphandler.UsbPortList,
 			httphandler.MidiTester,
 			httphandler.MidiPortList,
+			httphandler.WritePinConfig,
 			// Add more routes
 		}
 		port := parsePort(LoadHTTPconf())

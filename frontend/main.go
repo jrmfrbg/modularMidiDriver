@@ -20,8 +20,8 @@ type USBDevice struct {
 }
 
 type USBDeviceData struct {
-	AvailableUSBDevices []USBDevice `json:"available_midi_ports"`
-	SelectedUSBDevice   string      `json:"selected_midi_port"`
+	AvailableUSBDevices []USBDevice `json:"available_usb_devices"`
+	SelectedUSBDevice   string      `json:"selected_usb_device"`
 }
 
 type MIDIDevice struct {
@@ -144,6 +144,9 @@ func main() {
 		fmt.Println("MIDI ports listed.")
 	case "help":
 		printUsage()
+	case "write-pin-config":
+		writePinConfig()
+		fmt.Println("triggered writePinConfig")
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 		printUsage()
@@ -426,4 +429,20 @@ func selectMIDIDevice(indexStr string) {
 	fmt.Printf("  Name: %s\n", selectedDevice.Name)
 	fmt.Printf("  Device Path: %s\n", selectedDevice.PortPath)
 	fmt.Printf("  Saved to: %s\n", filePath)
+}
+
+func writePinConfig() {
+	resp, err := http.Get(strings.Join([]string{backendApiLocation, "/writePinConfig"}, ""))
+	if err != nil {
+		fmt.Printf("Failed to call API: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("API returned status code: %d\n", resp.StatusCode)
+		return
+	}
+
+	fmt.Println("Pin configuration written successfully.")
 }
