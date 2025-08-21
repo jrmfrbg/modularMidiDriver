@@ -24,6 +24,25 @@ var (
 	FilePath = filepath.Join(dirPath, "usb_ports.json")
 )
 
+func GetSelectedUSBDevice(usbPortsListFile string) (string, error) {
+	// Read the content of the JSON file.
+	fileContent, err := os.ReadFile(usbPortsListFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file '%s': %w", usbPortsListFile, err)
+	}
+
+	// Create an instance of the USBPortsList struct to hold the unmarshaled data.
+	var config USBPortsList
+
+	// Unmarshal the JSON content into the config struct.
+	if err := json.Unmarshal(fileContent, &config); err != nil {
+		return "", fmt.Errorf("failed to unmarshal JSON from '%s': %w", usbPortsListFile, err)
+	}
+
+	// Return the selected USB device.
+	return config.SelectedUSBDevice, nil
+}
+
 // UsbPortLists retrieves the list of USB devices with their names and device paths.
 func UsbPortLists() string {
 	fmt.Printf("Running on OS: %s\n", runtime.GOOS) // Debug output

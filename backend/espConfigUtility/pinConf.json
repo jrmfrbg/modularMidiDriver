@@ -1,0 +1,44 @@
+{
+    "multiplexers": [
+        {
+            "id": 1,
+            "pins": [1, 1, 1, 1, 1, 1, 1, 1],
+            "pinA": 40,
+            "pinB": 38,
+            "pinC": 39,
+            "serialIOpin": 1
+        },
+        {
+            "id": 2,
+            "pins": [1, 1, 1, 1, 1, 1, 1, 1],
+            "pinA": 40,
+            "pinB": 38,
+            "pinC": 39,
+            "serialIOpin": 2
+        },
+        {
+            "id": 3,
+            "pins": [1, 1, 1, 1, 1, 1, 1, 1],
+            "pinA": 40,
+            "pinB": 38,
+            "pinC": 39,
+            "serialIOpin": 3
+        },
+        {
+            "id": 4,
+            "pins": [2, 2, 2, 2, 2, 2, 2, 2],
+            "pinA": 40,
+            "pinB": 38,
+            "pinC": 39,
+            "serialIOpin": 4
+        },
+        {
+            "id": 5,
+            "pins": [2, 2, 2, 2, 2, 2, 2, 2],
+            "pinA": 40,
+            "pinB": 38,
+            "pinC": 39,
+            "serialIOpin": 5
+        }
+    ]
+}
