@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	getvalues "modularMidiGoApp/backend/getValues"
-	//usbUtility "modularMidiGoApp/backend/usbUtility"
+	usbUtility "modularMidiGoApp/backend/usbUtility"
 )
 
 /*
@@ -26,41 +26,60 @@ type Multiplexer8bit struct {
 }
 
 func WritePinConfig() error {
+	fmt.Println("Writing pin configuration...")
 	mux, err := readConfFile()
 	if err != nil {
+		fmt.Printf("Error reading config file: %v\n", err)
 		return err
 	}
 
+	fmt.Printf("Loaded %d multiplexers from config file.\n", len(mux))
+
 	// Marshal the data and write it to the USB
-	for _, m := range mux {
+	for i, m := range mux {
+		fmt.Printf("Processing multiplexer #%d: %+v\n", i, m)
 		jsonData, err := json.Marshal(m)
 		if err != nil {
+			fmt.Printf("Error marshaling multiplexer #%d: %v\n", i, err)
 			return err
 		}
-		/*
-			if err := usbUtility.WriteToUSB(jsonData); err != nil {
-				return err
-			}
-		*/
-		fmt.Println(string(jsonData))
+
+		if err := usbUtility.WriteToUSB(jsonData); err != nil {
+			fmt.Printf("Error writing to USB for multiplexer #%d: %v\n", i, err)
+			return err
+		}
+
+		fmt.Printf("JSON data for multiplexer #%d: %s\n", i, string(jsonData))
 	}
 
+	fmt.Println("Pin configuration write completed.")
 	return nil
 }
 
+type MuxConfig struct {
+	Multiplexers []Multiplexer8bit `json:"multiplexers"`
+}
+
 func readConfFile() ([]Multiplexer8bit, error) {
-	filePath := filepath.Join(getvalues.FindRootPath(), "/backend/espConfigUtility/pinConf.json")
+	filePath := filepath.Join(getvalues.FindRootPath(), "/espConfigUtility/pinConf.json")
+	fmt.Printf("Reading config file from: %s\n", filePath)
 
 	file, err := os.Open(filePath)
 	if err != nil {
+		fmt.Printf("Error opening config file: %v\n", err)
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		fmt.Println("Closing config file.")
+		file.Close()
+	}()
 
-	var mux []Multiplexer8bit
-	if err := json.NewDecoder(file).Decode(&mux); err != nil {
+	var muxConfig MuxConfig
+	if err := json.NewDecoder(file).Decode(&muxConfig); err != nil {
+		fmt.Printf("Error decoding JSON: %v\n", err)
 		return nil, err
 	}
 
-	return mux, nil
+	fmt.Println("Config file successfully decoded.")
+	return muxConfig.Multiplexers, nil
 }
