@@ -4,6 +4,7 @@ import (
 	"fmt"
 	espConfigUtility "modularMidiGoApp/backend/espConfigUtility"
 	midiCCOutputer "modularMidiGoApp/backend/midiUtility"
+	midiOutputPipeline "modularMidiGoApp/backend/midiUtility/midiOutputPipeline"
 	"modularMidiGoApp/backend/usbUtility"
 	"net/http"
 )
@@ -50,6 +51,14 @@ var MidiPortList = Route{
 	Handler: func(w http.ResponseWriter, r *http.Request) {
 		midi_ports_file := midiCCOutputer.ListMIDIPorts()
 		fmt.Fprintln(w, midi_ports_file)
+	},
+}
+
+var StartUSBListener = Route{
+	Path: "/startUSBListener",
+	Handler: func(w http.ResponseWriter, r *http.Request) {
+		go usbUtility.ESP32MidiListener(0, midiOutputPipeline.MidiOutChannel)
+		fmt.Fprint(w, "USB listener started successfully.")
 	},
 }
 

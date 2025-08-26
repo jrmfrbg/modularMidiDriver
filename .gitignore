@@ -1,3 +1,7 @@
 frontend/usb-manager
 frontend/frontend
 frontend/frontend-gui
+backend/driver/__debug_bin*
+frontend/frontend
+esp_data/addThis.md
+.gitignore

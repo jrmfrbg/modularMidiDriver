@@ -12,8 +12,7 @@ import (
 // - Starts HTTP handler
 func main() {
 	go midiOutputPipeline.MidiWriter()
-	stopUSBListener := make(chan struct{})
-	go usbUtility.ESP32MidiListener(0, midiOutputPipeline.MidiOutChannel, stopUSBListener)
+	go usbUtility.ESP32MidiListener(0, midiOutputPipeline.MidiOutChannel)
 
 	go func() {
 		routes := []httphandler.Route{

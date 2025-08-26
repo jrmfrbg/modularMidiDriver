@@ -16,7 +16,13 @@ type USBPortsList struct {
 	SelectedUSBDevice   string      `json:"selected_usb_device"`
 }
 
-func ESP32MidiListener(channel uint8, outputChan chan<- midiOutputPipeline.MidiCCMessage, stopChan <-chan struct{}) {
+var stopChan = make(chan struct{})
+
+func StopESP32MidiListener() {
+	close(stopChan)
+}
+
+func ESP32MidiListener(channel uint8, outputChan chan<- midiOutputPipeline.MidiCCMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("ESP32MidiListener recovered from panic: %v", r)
@@ -29,7 +35,7 @@ func ESP32MidiListener(channel uint8, outputChan chan<- midiOutputPipeline.MidiC
 			log.Println("ESP32MidiListener stopping...")
 			return
 		default:
-			if err := listenToESP32(channel, outputChan, stopChan); err != nil {
+			if err := listenToESP32(channel, outputChan); err != nil {
 				log.Printf("ESP32 connection error: %v", err)
 				log.Println("Retrying in 5 seconds...")
 
@@ -44,7 +50,7 @@ func ESP32MidiListener(channel uint8, outputChan chan<- midiOutputPipeline.MidiC
 	}
 }
 
-func listenToESP32(channel uint8, outputChan chan<- midiOutputPipeline.MidiCCMessage, stopChan <-chan struct{}) error {
+func listenToESP32(channel uint8, outputChan chan<- midiOutputPipeline.MidiCCMessage) error {
 	// Get the selected USB device
 	deviceName, err := GetSelectedUSBDevice(FilePath)
 	if err != nil {
@@ -69,14 +75,29 @@ func listenToESP32(channel uint8, outputChan chan<- midiOutputPipeline.MidiCCMes
 
 	log.Printf("Successfully connected to ESP32 on %s", deviceName)
 
+	// Wait for ESP32 to be ready for mode selection
+	modeSelectReader := bufio.NewReader(port)
+	port.SetReadTimeout(30 * time.Second)
+	for {
+		line, err := modeSelectReader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading from USB device: %w", err)
+		}
+		if line == "SELECT_MODE\n" || line == "SELECT_MODE\r\n" {
+			log.Println("ESP32 ready for mode selection")
+			break
+		}
+	}
+	//send mode selection command
+	if _, err := port.Write([]byte("BROADCAST_MODE\n")); err != nil {
+		return fmt.Errorf("failed to write mode selection to USB device: %w", err)
+	}
+
 	// Create buffered reader for line-by-line reading
 	reader := bufio.NewReader(port)
 
 	for {
 		select {
-		case <-stopChan:
-			log.Println("Stopping ESP32 listener...")
-			return nil
 		default:
 			// Read line (until newline)
 			line, err := reader.ReadBytes('\n')
@@ -163,6 +184,25 @@ func WriteToUSB(data interface{}) error {
 		bytesToWrite = []byte(v)
 	default:
 		return fmt.Errorf("unsupported data type for writing to USB device")
+	}
+
+	//Wait for ESP32 to be ready for mode selection
+	reader := bufio.NewReader(conn)
+	conn.SetReadTimeout(30 * time.Second)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading from USB device: %w", err)
+		}
+		if line == "SELECT_MODE\n" || line == "SELECT_MODE\r\n" {
+			log.Println("ESP32 ready for mode selection")
+			break
+		}
+	}
+
+	//send mode selection command
+	if _, err := conn.Write([]byte("FLASH_MODE\n")); err != nil {
+		return fmt.Errorf("failed to write mode selection to USB device: %w", err)
 	}
 
 	// Write the data to the USB device

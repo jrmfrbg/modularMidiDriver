@@ -26,6 +26,7 @@ type Multiplexer8bit struct {
 }
 
 func WritePinConfig() error {
+	usbUtility.StopESP32MidiListener()
 	fmt.Println("Writing pin configuration...")
 	mux, err := readConfFile()
 	if err != nil {
