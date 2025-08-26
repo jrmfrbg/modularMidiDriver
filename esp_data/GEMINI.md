@@ -31,9 +31,18 @@ The Arduino `.ino` file will be structured as follows:
 - **MIDI Mapping**: Create a data structure (e.g., an array of structs) to map each input pin to a specific MIDI CC number. This will make the code easy to configure and expand.
 - **State Management**: An array or struct to hold the last known state of each sensor to track changes.
 
+### Mode selector
+- **ESP Flash mode**
+    - Save received string
+    - parse received string into matrix (x = pins, y = Multiplexer)
+    - save matrix to namespace in flash
+- **Broadcast Mode**
+    - **Read Cycle**: Read one sensor at a time and add it to int matrix(8)(number of mux) (x=analog read value, y = multiplexer)
+    - **Send Cycle**: Write each element of array seperated by , ended by ;
+
 ### `setup()` function
-- Initialize the serial communication with the same baud rate as the backend (e.g., 9600).
-- Configure the `pinMode` for each sensor pin (e.g., `INPUT` for potentiometers, `INPUT_PULLUP` for buttons).
+- load matrix from namespace
+- parse matrix and set pin vaiables.
 
 ### `loop()` function
 - The main loop will continuously call a function to read all sensors.

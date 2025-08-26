@@ -95,6 +95,8 @@ void setup() {
     pinMode(multiplexers[i].pinC, OUTPUT);
     pinMode(multiplexers[i].serialIOpin, INPUT);
   }
+
+  Serial.println("SELECT_MODE");
 }
 
 void loop() {
