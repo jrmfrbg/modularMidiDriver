@@ -1,10 +1,12 @@
 package espconfigutility
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	getvalues "modularMidiGoApp/backend/getValues"
 	usbUtility "modularMidiGoApp/backend/usbUtility"
@@ -26,7 +28,6 @@ type Multiplexer8bit struct {
 }
 
 func WritePinConfig() error {
-	usbUtility.StopESP32MidiListener()
 	fmt.Println("Writing pin configuration...")
 	mux, err := readConfFile()
 	if err != nil {
@@ -36,23 +37,24 @@ func WritePinConfig() error {
 
 	fmt.Printf("Loaded %d multiplexers from config file.\n", len(mux))
 
-	// Marshal the data and write it to the USB
+	var configString bytes.Buffer
+	configString.WriteString("MUX_COUNT:" + strconv.Itoa(len(mux)) + ";")
+
 	for i, m := range mux {
-		fmt.Printf("Processing multiplexer #%d: %+v\n", i, m)
-		jsonData, err := json.Marshal(m)
-		if err != nil {
-			fmt.Printf("Error marshaling multiplexer #%d: %v\n", i, err)
-			return err
+		configString.WriteString(fmt.Sprintf("MUX%d:%d,%d,%d,%d,%d",
+			i+1, m.Id, m.PinA, m.PinB, m.PinC, m.SerialIOpin))
+		for _, pin := range m.Pins {
+			configString.WriteString("," + strconv.Itoa(pin))
 		}
-
-		if err := usbUtility.WriteToUSB(jsonData); err != nil {
-			fmt.Printf("Error writing to USB for multiplexer #%d: %v\n", i, err)
-			return err
-		}
-
-		fmt.Printf("JSON data for multiplexer #%d: %s\n", i, string(jsonData))
+		configString.WriteString(";")
 	}
 
+	if err := usbUtility.WriteToUSB(configString.String()); err != nil {
+		fmt.Printf("Error writing to USB: %v\n", err)
+		return err
+	}
+
+	fmt.Printf("Config data sent: %s\n", configString.String())
 	fmt.Println("Pin configuration write completed.")
 	return nil
 }

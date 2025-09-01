@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Pin Configuration Generator</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body {
+            background-color: #010b14;
+            color: #99c695;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .config-panel {
+            background-color: #456387;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+            width: 80%;
+            max-width: 800px;
+        }
+        .config-panel h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #99c695;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            margin-right: 10px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            width: 90%;
+            margin: 20px auto 0 auto;
+            justify-content: center;
+        }
+        .multiplexer {
+            background-color: #dda6de;
+            color: #010b14;
+            width: 150px; /* Increased width for better layout */
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .multiplexer h4 {
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 1px solid #010b14;
+            padding-bottom: 5px;
+        }
+        .mux-io-pin {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        select, input {
+            background-color: #010b14;
+            color: #99c695;
+            border: 1px solid #456387;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #456387;
+            color: #99c695;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #json-output {
+            background-color: #010b14;
+            border: 1px solid #456387;
+            padding: 15px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>ESP32 Pin Configuration Generator</h1>
+
+    <div class="config-panel">
+        <h2>Configuration</h2>
+        <form id="config-form">
+            <div class="form-group">
+                <label for="gpio-pins">Number of ESP32 GPIO Pins:</label>
+                <input type="number" id="gpio-pins" name="gpio-pins" value="40" min="1">
+            </div>
+            <div class="form-group">
+                <label for="mux-count">Number of Multiplexers:</label>
+                <input type="number" id="mux-count" name="mux-count" value="5" min="1" max="10">
+            </div>
+        </form>
+    </div>
+
+    <div class="container" id="main-container">
+        <!-- Multiplexers will be dynamically generated here -->
+    </div>
+
+    <button
+        hx-post="/generate"
+        hx-target="#json-output"
+        hx-include="#config-form, .mux-form-data"
+    >Generate JSON</button>
+
+    <h2>Generated JSON</h2>
+    <pre id="json-output"></pre>
+    <button id="save-button" style="display: none; margin-top: 10px;">Save JSON</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const muxCountInput = document.getElementById('mux-count');
+            const gpioPinsInput = document.getElementById('gpio-pins');
+            const container = document.getElementById('main-container');
+
+            function generateMultiplexers() {
+                // Save current values
+                const savedValues = {};
+                document.querySelectorAll('.mux-form-data input, .mux-form-data select').forEach(input => {
+                    savedValues[input.name] = input.value;
+                });
+
+                // Clear existing multiplexers
+                container.innerHTML = ''; // Clear container
+
+                const muxCount = parseInt(muxCountInput.value, 10);
+
+                for (let i = 0; i < muxCount; i++) {
+                    const muxElement = document.createElement('div');
+                    muxElement.className = 'multiplexer';
+
+                    let io_pins_html = '';
+                    for (let j = 0; j < 8; j++) {
+                        const selectName = `mux-${i}-io-${j}`;
+                        io_pins_html += `
+                        <div class="mux-io-pin">
+                            <label for="${selectName}">Pin ${j}:</label>
+                            <select id="${selectName}" name="${selectName}">
+                                <option value="1">Button</option>
+                                <option value="2">Poti</option>
+                                <option value="3">Rotary</option>
+                            </select>
+                        </div>
+                        `;
+                    }
+
+                    muxElement.innerHTML = `
+                        <div class="mux-form-data">
+                            <h4>Mux ${i + 1}</h4>
+                            <input type="hidden" name="mux-${i}-id" value="${i + 1}">
+                            <div class="form-group">
+                                <label>A:</label>
+                                <input type="text" name="mux-${i}-pinA" pattern="[0-9]+" title="Enter a number" style="width: 50px;">
+                            </div>
+                            <div class="form-group">
+                                <label>B:</label>
+                                <input type="text" name="mux-${i}-pinB" pattern="[0-9]+" title="Enter a number" style="width: 50px;">
+                            </div>
+                            <div class="form-group">
+                                <label>C:</label>
+                                <input type="text" name="mux-${i}-pinC" pattern="[0-9]+" title="Enter a number" style="width: 50px;">
+                            </div>
+                            <div class="form-group">
+                                <label>SIO:</label>
+                                <input type="text" name="mux-${i}-serialIOpin" pattern="[0-9]+" title="Enter a number" style="width: 50px;">
+                            </div>
+                            ${io_pins_html}
+                        </div>
+                    `;
+                    container.appendChild(muxElement);
+
+                    // Restore saved values
+                    muxElement.querySelectorAll('input, select').forEach(input => {
+                        if (savedValues[input.name]) {
+                            input.value = savedValues[input.name];
+                        }
+                    });
+
+                    const inputs = muxElement.querySelectorAll('input[type="text"]');
+                    inputs.forEach(input => {
+                        input.addEventListener('input', () => {
+                            const gpioCount = parseInt(gpioPinsInput.value, 10);
+                            const value = parseInt(input.value, 10);
+                            if (isNaN(value) || value < 0 || value >= gpioCount) {
+                                input.style.borderColor = 'red';
+                            } else {
+                                input.style.borderColor = '#456387'; // Reset to default
+                            }
+                        });
+                        // Trigger validation on load
+                        input.dispatchEvent(new Event('input'));
+                    });
+                }
+            }
+
+            muxCountInput.addEventListener('change', generateMultiplexers);
+            gpioPinsInput.addEventListener('change', generateMultiplexers);
+
+            // Initial generation
+            generateMultiplexers();
+        });
+
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            // Show save button if the request was successful and returned JSON
+            if (evt.detail.successful) {
+                const jsonOutput = document.getElementById('json-output');
+                if(jsonOutput.textContent.trim().startsWith('{')){
+                    const saveButton = document.getElementById('save-button');
+                    saveButton.style.display = 'block';
+                }
+            }
+        });
+
+        document.getElementById('save-button').addEventListener('click', function() {
+            const jsonContent = document.getElementById('json-output').textContent;
+            const blob = new Blob([jsonContent], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pinConf.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+    <footer>&copy; Jorim Stern 2025 * Partially created using AI * Contact: <a href="mailto:info@jorim.xyz" style="color: #99c695;">info@jorim.xyz</a></footer>
+</body>
+</html>
