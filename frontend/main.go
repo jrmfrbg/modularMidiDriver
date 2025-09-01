@@ -147,6 +147,9 @@ func main() {
 	case "write-pin-config":
 		writePinConfig()
 		fmt.Println("triggered writePinConfig")
+	case "normal-mode":
+		fmt.Println("Normal mode selected")
+		enterNormalMode()
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 		printUsage()
@@ -445,4 +448,20 @@ func writePinConfig() {
 	}
 
 	fmt.Println("Pin configuration written successfully.")
+}
+
+func enterNormalMode() {
+	resp, err := http.Get(strings.Join([]string{backendApiLocation, "/startNormalMode"}, ""))
+	if err != nil {
+		fmt.Printf("Failed to call API: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("API returned status code: %d\n", resp.StatusCode)
+		return
+	}
+
+	fmt.Println("Entered normal mode successfully.")
 }

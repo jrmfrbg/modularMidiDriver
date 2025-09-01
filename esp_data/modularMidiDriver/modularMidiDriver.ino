@@ -14,6 +14,8 @@ Mode currentMode = BROADCAST;
 #define MUX_COUNT 5
 #define MUX_IO_PIN_BASE 1 // Example, will be set from config
 
+#define TX2 11
+#define RX2 10
 // MIDI Mapping
 struct Mux {
   int id;
@@ -63,14 +65,104 @@ void readSensors() {
   }
 }
 
+bool validateConfig(String configString) {
+  if (configString == "") {
+    return false;
+  }
+
+  // Parse MUX_COUNT
+  int muxCountIndex = configString.indexOf("MUX_COUNT:");
+  if (muxCountIndex == -1) {
+    return false;
+  }
+  int muxCount = configString.substring(muxCountIndex + 10).toInt();
+  if (muxCount > MUX_COUNT) {
+    muxCount = MUX_COUNT;
+  }
+
+  // Parse each multiplexer's data
+  int startIndex = 0;
+  for (int i = 0; i < muxCount; i++) {
+    String muxKey = "MUX" + String(i + 1) + ":";
+    int muxIndex = configString.indexOf(muxKey, startIndex);
+    if (muxIndex == -1) {
+      return false;
+    }
+    int endIndex = configString.indexOf(';', muxIndex);
+    if (endIndex == -1) {
+      endIndex = configString.length();
+    }
+    String muxData = configString.substring(muxIndex + muxKey.length(), endIndex);
+    
+    // Split the muxData by commas
+    int valueIndex = 0;
+    int lastIndex = 0;
+    String values[13];
+    for(int j = 0; j < 13; j++) {
+        int currentIndex = muxData.indexOf(',', lastIndex);
+        if (currentIndex == -1) {
+            currentIndex = muxData.length();
+        }
+        values[j] = muxData.substring(lastIndex, currentIndex);
+        lastIndex = currentIndex + 1;
+    }
+
+    if (lastIndex < muxData.length()) {
+        return false;
+    }
+  }
+  return true;
+}
+
 void loadConfigFromFlash() {
   preferences.begin("midiConfig", false);
   String configString = preferences.getString("config", "");
-  // TODO: Parse the configString and populate the multiplexers array.
-  // The config string should contain the number of multiplexers,
-  // and for each multiplexer, its ID, pinA, pinB, pinC, serialIOpin,
-  // and the 8 MIDI CC numbers for its pins.
-  // Example format: "MUX_COUNT:5;MUX1:id,pA,pB,pC,io,c1,c2,c3,c4,c5,c6,c7,c8;MUX2:..."
+  if (!validateConfig(configString)) {
+    Serial.println("Invalid config found in flash.");
+    return;
+  }
+
+  // Parse MUX_COUNT
+  int muxCountIndex = configString.indexOf("MUX_COUNT:");
+  int muxCount = configString.substring(muxCountIndex + 10).toInt();
+  if (muxCount > MUX_COUNT) {
+    muxCount = MUX_COUNT;
+  }
+
+  // Parse each multiplexer's data
+  int startIndex = 0;
+  for (int i = 0; i < muxCount; i++) {
+    String muxKey = "MUX" + String(i + 1) + ":";
+    int muxIndex = configString.indexOf(muxKey, startIndex);
+    int endIndex = configString.indexOf(';', muxIndex);
+    if (endIndex == -1) {
+      endIndex = configString.length();
+    }
+    String muxData = configString.substring(muxIndex + muxKey.length(), endIndex);
+    
+    // Split the muxData by commas
+    int valueIndex = 0;
+    int lastIndex = 0;
+    String values[13];
+    for(int j = 0; j < 13; j++) {
+        int currentIndex = muxData.indexOf(',', lastIndex);
+        if (currentIndex == -1) {
+            currentIndex = muxData.length();
+        }
+        values[j] = muxData.substring(lastIndex, currentIndex);
+        lastIndex = currentIndex + 1;
+    }
+
+    multiplexers[i].id = values[0].toInt();
+    multiplexers[i].pinA = values[1].toInt();
+    multiplexers[i].pinB = values[2].toInt();
+    multiplexers[i].pinC = values[3].toInt();
+    multiplexers[i].serialIOpin = values[4].toInt();
+    for (int j = 0; j < 8; j++) {
+      multiplexers[i].pins[j] = values[j + 5].toInt();
+    }
+    startIndex = endIndex;
+  }
   preferences.end();
 }
 
@@ -84,7 +176,13 @@ void saveConfigToFlash(String config) {
 
 void setup() {
   Serial.begin(9600);
-
+  sleep(1);
+  Serial.println("STARTING UP! Serial1");
+  Serial2.begin(9600, SERIAL_8N1, RX2, TX2);
+  sleep(1);
+  Serial2.println("STARTING UP! Serial2");
+  sleep(1);
+  Serial.println("STARTED UP!");
   // Load configuration from flash memory
   loadConfigFromFlash();
 
@@ -116,13 +214,14 @@ void loop() {
         pinMode(multiplexers[i].serialIOpin, INPUT);
       }
     } else if (currentMode == FLASH) {
-      saveConfigToFlash(input);
-      Serial.println("Config saved!");
+      if (validateConfig(input)) {
+        saveConfigToFlash(input);
+        Serial.println("Config saved!");
+      } else {
+        Serial.println("Invalid config format!");
+      }
+    } else {
+      Serial.println("Unknown command in BROADCAST mode.");
     }
   }
-
-  if (currentMode == BROADCAST) {
-    readSensors();
-  }
-  // In FLASH mode, we just wait for config data
 }

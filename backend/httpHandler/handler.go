@@ -15,6 +15,14 @@ type Route struct {
 	Handler http.HandlerFunc
 }
 
+var StartNormalMode = Route{
+	Path: "/startNormalMode",
+	Handler: func(w http.ResponseWriter, r *http.Request) {
+		go usbUtility.ESP32MidiListener(0, midiOutputPipeline.MidiOutChannel)
+		fmt.Fprint(w, "Normal mode started")
+	},
+}
+
 var TestCallRoute = Route{
 	Path: "/testCall",
 	Handler: func(w http.ResponseWriter, r *http.Request) {
